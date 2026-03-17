@@ -136,6 +136,10 @@ outer:
 			read += n
 
 			if done {
+				encoding, ok := r.Headers.Get("transfer-encoding")
+				if encoding == "chunked" && ok {
+					return 0, fmt.Errorf("chunked encoding not implemented")
+				}
 				if r.hasBody() {
 					r.state = StateBody
 				} else {
@@ -145,10 +149,6 @@ outer:
 
 		case StateBody:
 			length := getInt(r.Headers, "content-length", 0)
-			if length == 0 {
-				panic("chunked not implemented")
-			}
-
 			remaining := min(length - len(r.Body), len(currentData)) 
 			r.Body += string(currentData[:remaining])
 			read += remaining
@@ -178,6 +178,12 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 	buf := make([]byte, 1024)
 	idx := 0
 	for !request.done() {
+		if idx == len(buf) {
+			biggerBuf := make([]byte, len(buf) * 2)
+			copy(biggerBuf, buf)
+			buf = biggerBuf
+		}
+
 		n, err := reader.Read(buf[idx:])
 		if err != nil {
 			return nil, err

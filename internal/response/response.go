@@ -11,6 +11,8 @@ type StatusCode int
 const (
 	StatusOK StatusCode = 200
 	StatusBadRequest StatusCode = 400
+	StatusNotFound StatusCode = 404
+	StatusMethodNotAllowed StatusCode = 405
 	StatusInternalServerError StatusCode = 500
 )
 
